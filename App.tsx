@@ -5,12 +5,26 @@ import { getDBConnection, createTables } from './src/database/dbConfig';
 import { requestLocationPermission } from './src/utils/permissions';
 import { startBackgroundTracking, stopBackgroundTracking } from './src/services/LocationService';
 import { syncDataToServer } from './src/services/SyncService';
+import { getStats } from './src/database/dbConfig';
+import { useFleetStore } from './src/store/useFleetStore';
 
 const App = () => {
   const [dbStatus, setDbStatus] = useState<string>('Menginisialisasi Database...');
   const [permissionStatus, setPermissionStatus] = useState<string>('Memeriksa Izin...');
-  const [dbInstance, setDbInstance] = useState<SQLiteDatabase | null>(null);
-  const [isTracking, setIsTracking] = useState<boolean>(false);
+  const [dbInstance, setDbInstance] = useState<any>(null);
+  const { totalLogs, pendingSync, isTracking, setStats, setTracking } = useFleetStore();
+
+  const refreshStats = async (db: any) => {
+    const stats = await getStats(db);
+    setStats(stats.total, stats.pending);
+  };
+
+  useEffect(() => {
+    if (dbInstance) {
+      const interval = setInterval(() => refreshStats(dbInstance), 5000); // Refresh stats setiap 5 detik
+      return () => clearInterval(interval);
+    }
+  }, [dbInstance]);
 
   useEffect(() => {
     const initApp = async () => {
@@ -44,13 +58,13 @@ const App = () => {
   const handleStartTracking = () => {
     if (dbInstance) {
       startBackgroundTracking(dbInstance);
-      setIsTracking(true);
+      setTracking(true); 
     }
   };
 
   const handleStopTracking = () => {
     stopBackgroundTracking();
-    setIsTracking(false);
+    setTracking(false); 
   };
 
   return (
@@ -75,7 +89,7 @@ const App = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Tombol Manual Sync untuk melihat proses Fase 2 bekerja */}
+        
         <TouchableOpacity
           className="bg-blue-100 border border-blue-300 py-3 px-6 rounded-xl w-full items-center"
           onPress={handleManualSync}

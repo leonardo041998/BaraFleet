@@ -3,17 +3,13 @@ import SQLite, { SQLiteDatabase } from 'react-native-sqlite-storage';
 SQLite.enablePromise(true);
 
 const database_name = "BaraFleetLocal.db";
-const database_version = "1.0";
-const database_displayname = "BaraFleet Offline Database";
-const database_size = 200000;
 
+// getDBConnection diperbarui agar menggunakan format objek yang benar
 export const getDBConnection = async (): Promise<SQLiteDatabase> => {
-  return SQLite.openDatabase(
-    database_name,
-    database_version,
-    database_displayname,
-    database_size
-  );
+  return SQLite.openDatabase({
+    name: database_name,
+    location: 'default',
+  });
 };
 
 export const createTables = async (db: SQLiteDatabase): Promise<void> => {
@@ -34,4 +30,14 @@ export const createTables = async (db: SQLiteDatabase): Promise<void> => {
   } catch (error) {
     console.error("Gagal membuat tabel:", error);
   }
+};
+
+export const getStats = async (db: SQLiteDatabase) => {
+  const totalRes = await db.executeSql('SELECT COUNT(*) as total FROM location_logs');
+  const pendingRes = await db.executeSql('SELECT COUNT(*) as pending FROM location_logs WHERE is_synced = 0');
+  
+  return {
+    total: totalRes[0].rows.item(0).total,
+    pending: pendingRes[0].rows.item(0).pending
+  };
 };
