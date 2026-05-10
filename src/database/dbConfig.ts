@@ -16,6 +16,8 @@ export const createTables = async (db: SQLiteDatabase): Promise<void> => {
   const query = `
     CREATE TABLE IF NOT EXISTS location_logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      vehicle_id TEXT NOT NULL,   
+      driver_id TEXT NOT NULL,   
       latitude REAL NOT NULL,
       longitude REAL NOT NULL,
       speed REAL,
